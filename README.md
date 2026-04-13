@@ -1,13 +1,13 @@
 # AI-project 
 Hello 
 
-Final goals: 
+## Final goals: 
 1. code base for the project need to be submitted 
 2. report for the project 
 3. slideshow presentation for the project
 4. demo video - going through ppt and code, showing how code works and example outputs
 
-Sections in presentation and report: 
+### Sections in presentation and report: 
 1. motivation 
 2. problem statement identified and trying to solve
 3. previous solutions already present in the Internet 
@@ -19,20 +19,24 @@ Sections in presentation and report:
 9. limitations of my work 
 10. future work 
 
-1. Basic AI ML aspects 
+
+## Upcoming sessions:
+
+- Basic AI ML aspects 
     1. basic python functionalities: pandas numpy sklearn
     2. promting techniques: skills of using copilot; LLM skills 
-    3. Hugging face and benchmarks and datasets 
-    4. data visualisation: libraries matplotlib; seaborn 
+    3. data visualisation: libraries matplotlib; seaborn 
+    4. Hugging face and benchmarks and datasets
+        - training neural network models
     5. create chatbot interface with streamlit 
-2. AI for images 
-    1. basic image processing
-    2. different convolutional moving networks 
-    3. generative modules 
-    4. chatbot with AI imaging capabilities 
-3. Topics with respect to my project 
-    1. brainstorm ideas of what application we want to have 
-    2. previous solutions discussed 
-    3. our own strategy 
-    4. implementation
-    5. report and presentation
+- AI for images 
+    6. basic image processing
+    7. different convolutional moving networks 
+    8. generative modules 
+    9. chatbot with AI imaging capabilities 
+- Topics with respect to my project 
+    10. brainstorm ideas of what application we want to have 
+    11. previous solutions discussed 
+    12. our own strategy 
+    13. implementation
+    14. report and presentation
