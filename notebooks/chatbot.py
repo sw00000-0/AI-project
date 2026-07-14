@@ -28,11 +28,11 @@ def set_page_style(dark: bool):
 
 @st.cache_data(ttl=3600)
 def gemini_response(prompt: str) -> str:
+	import google.generativeai as genai
+	
 	key = os.getenv("GEMINI_API_KEY")
-	endpoint = os.getenv("GEMINI_ENDPOINT")
-	model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-	if key and not endpoint:
-		endpoint = f"https://api.gemini.google/v1/models/{model}:generate"
+	model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+	
 	if not key:
 		# Free local chatbot fallback when no API key is missing
 		normalized = prompt.strip().lower()
@@ -43,21 +43,12 @@ def gemini_response(prompt: str) -> str:
 		if "weather" in normalized:
 			return "I can't fetch live weather without an API, but I can still chat with you!"
 		return f"Free chatbot response: {prompt}"
-	headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-	payload = {"prompt": prompt}
+	
 	try:
-		r = requests.post(endpoint, headers=headers, json=payload, timeout=30)
-		r.raise_for_status()
-		data = r.json()
-		# Try common response shapes
-		if isinstance(data, dict):
-			if "output" in data and isinstance(data["output"], dict) and "text" in data["output"]:
-				return data["output"]["text"]
-			if "choices" in data and isinstance(data["choices"], list) and data["choices"]:
-				first = data["choices"][0]
-				if isinstance(first, dict):
-					return first.get("text") or first.get("message", {}).get("content", "")
-		return json.dumps(data)
+		genai.configure(api_key=key)
+		model = genai.GenerativeModel(model_name)
+		response = model.generate_content(prompt)
+		return response.text
 	except Exception as e:
 		return f"Error calling Gemini API: {e}"
 
@@ -113,11 +104,11 @@ def main():
 			with st.spinner("Thinking..."):
 				resp = gemini_response(user_input)
 			st.session_state.messages.append({"role": "bot", "text": resp})
-			st.session_state.input_area = ""
 			if resp.strip():
 				st.success("Response generated successfully.")
 			else:
 				st.error("No response was generated. Try again.")
+			st.rerun()
 
 	with col2:
 		st.markdown("**Session**")

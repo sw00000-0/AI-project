@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Art Teacher</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <h3 class="logo">AI Art Teacher</h3>
+        <div id="auth" class="auth-area">
+          <button id="show-login" class="btn">Sign In</button>
+        </div>
+      </div>
+    </header>
+    <div class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">Phase One • AI Art Teacher</p>
+        <h1>Learn, review, and improve your art with AI-guided feedback.</h1>
+        <p class="subtitle">
+          Upload your artwork, explore creative prompts, and get structured feedback that helps you grow faster.
+        </p>
+        <div class="actions">
+          <a class="primary" href="#features">Explore Features</a>
+          <a class="secondary" href="#about">Learn More</a>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <section id="features" class="card-grid">
+        <article class="card">
+          <h2>Upload Artwork</h2>
+          <p>Share your image and add context for review and feedback.</p>
+        </article>
+        <article class="card">
+          <h2>Get AI Feedback</h2>
+          <p>Receive immediate suggestions on color, lighting, symmetry, and composition.</p>
+        </article>
+        <article class="card">
+          <h2>Join Challenges</h2>
+          <p>Participate in community challenges and track your progress over time.</p>
+        </article>
+      </section>
+
+      <section id="about" class="info-section">
+        <h2>Built for creative practice</h2>
+        <p>
+          This frontend is a simple landing experience for the AI Art Teacher platform. It gives the app a polished starting point while the backend handles submissions and feedback.
+        </p>
+      </section>
+    </main>
+    <div id="login-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Sign In</h3>
+        <form id="login-form">
+          <label>Email</label>
+          <input type="email" name="email" required />
+          <label>Password</label>
+          <input type="password" name="password" required />
+          <p style="margin-top:0.5rem">Don't have an account? <a href="#" id="show-signup">Create one</a></p>
+          <div class="modal-actions">
+            <button type="submit" class="primary">Sign In</button>
+            <button type="button" id="cancel-login" class="secondary">Cancel</button>
+          </div>
+          <div id="login-error" class="error"></div>
+        </form>
+      </div>
+    </div>
+    <div id="signup-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Create account</h3>
+        <form id="signup-form">
+          <label>Name</label>
+          <input type="text" name="name" required />
+          <label>Email</label>
+          <input type="email" name="email" required />
+          <label>Password</label>
+          <input type="password" name="password" required />
+          <label>Age</label>
+          <input type="number" name="age" min="10" max="120" value="18" required />
+          <label>Experience level</label>
+          <select name="experience_level">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+          <div class="modal-actions">
+            <button type="submit" class="primary">Create</button>
+            <button type="button" id="cancel-signup" class="secondary">Cancel</button>
+          </div>
+          <div id="signup-error" class="error"></div>
+        </form>
+      </div>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -1,3 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic[email]
+passlib[bcrypt]
+python-jose
+google-generativeai
 streamlit
 python-dotenv
 requests
+httpx

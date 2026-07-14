@@ -1,0 +1,111 @@
+You are an automated app generator. Produce a complete, strict specification and scaffolding plan to build a web application called "AI Art Teacher". Follow these requirements exactly and produce output suitable for code generation (backend APIs, data models, UI pages/components, sample API payloads, acceptance criteria, and test cases). Do not add features beyond those listed. Be precise and unambiguous.
+
+1) App Overview
+- Name: AI Art Teacher
+- Purpose: Allow students to submit artwork, receive structured feedback and grades (realistic mode) or suggestions (creative mode), maintain submission history, enable community discussion, and run monthly challenges with leaderboards.
+
+2) Users and Roles
+- Student: registers, logs in, uploads submissions, views feedback/history, joins communities, participates in challenges.
+- Teacher/Moderator: reviews submissions, annotates images, adjusts grades, manages challenges and community settings.
+- Admin: manages users, communities, and global settings.
+
+3) Authentication & Accounts
+- Provide secure signup/login with email + password and optional OAuth providers. Required fields on signup: `name` (string), `age` (integer), `experience_level` (enum: `beginner|intermediate|advanced`).
+- `advanced` experience_level unlocks the most detailed feedback mode for that user by default.
+- Sessions: JWT-based with refresh tokens. Passwords stored hashed (bcrypt/argon2).
+
+4) Data Models (strict)
+- User: { id, name, email, password_hash, age, experience_level, role, created_at }
+- Submission: { id, user_id, title, description, mode: enum(`realistic`,`creative`), original_image_url, reference_image_url (nullable), uploaded_at, is_upside_down: bool, metadata: { orientation, width, height, format }, deleted: bool }
+- Feedback: { id, submission_id, reviewer_id (nullable for auto feedback), scores: { color_contrast: number0-100, light_shadow: number0-100, symmetry: number0-100, creativity: number0-100|null }, overall_score: number0-100|null, suggestions: text (for creative), comments: [ {id, author_id, text, created_at, referenced_labels: [int]} ], annotated_image_url (nullable), created_at }
+- Community/Thread: { id, name, is_public: bool, members: [user_id], created_at }
+- Reaction: { id, target_type: enum(`submission`,`comment`), target_id, user_id, reaction_type }
+- Challenge: { id, name, month, entries: [submission_id], leaderboard: [ {user_id, score} ], start_at, end_at }
+
+5) File Uploads & Storage
+- Accept images JPEG/PNG/WebP up to configurable max (e.g., 25 MB). Store originals and annotated versions. Provide signed URLs for uploads/downloads. Keep reference image optional.
+
+6) Submission Processing & Upside-down Detection (example)
+- Example behavior: on upload, run an orientation check. If the image is detected as rotated (>90% confidence), set `is_upside_down` = true and prompt the user: "Detected rotated image — keep orientation as-is or auto-rotate?" The system must never auto-rotate without explicit user confirmation.
+- This behavior is illustrative and must preserve user creativity and intent. Always allow the user to keep unconventional orientations (for artistic reasons) and provide an optional field for the user to add a short note explaining the creative choice. Treat orientation prompts as user-facing examples to support interaction rather than mandatory automatic changes.
+
+7) Modes & Prompting
+- Two modes: `realistic` and `creative`. If none chosen, default to `realistic`.
+- For each mode, use a different LLM prompting template (provide placeholders for `user_experience_level`, `submission_metadata`, and `reference_image_url`). Advanced users receive more granular, technical feedback.
+
+8) Grading and Feedback Rules
+- Realistic mode: produce numeric scores (0–100) and an overall percentage. Required score breakdown: `color_contrast`, `light_shadow`, `symmetry`. Overall_score must be computed as weighted average (weights: color_contrast 35%, light_shadow 35%, symmetry 30%). Provide explicit improvement suggestions tied to each low-scoring metric and at least 3 actionable steps.
+- Creative mode: provide textual suggestions and ideas (no numeric overall score). Include optional `creativity` score for internal ranking only (do not display as primary grade unless teacher enables it).
+- UI must allow collapsing each grading aspect and toggling whether the chatbot's feedback is considered in the final grade. When toggled off, a human reviewer grade overrides the LLM suggestion.
+
+9) UI Layout & Components (strict)
+- Main view: left panel is submission history (list of user's past submissions with thumbnails, timestamps, and delete action). Center panel shows selected submission with image viewer and feedback. Right panel shows reviewer tools and community thread feed.
+- Submission Card fields: thumbnail, title, mode badge, overall_score (if realistic), created_at, actions: view, edit (metadata), delete.
+- Feedback view: collapsible sections for each metric, suggested improvements, and an optional annotated image overlay with numbered callouts. Clicking a number in the callout scrolls to the corresponding comment.
+
+10) Annotated Images & Numbered Labels
+- Teachers or the system can generate an annotated image with numbered circles and a separate legend mapping numbers -> comment text. Annotated images must be stored and a URL included on the Feedback record. Comments may reference `referenced_labels` as integers pointing to annotated image callouts.
+
+11) Community Threads & Privacy
+- Two thread types: public (any signed-in user can comment/react) and private (only community members or explicitly allowed user_ids). Communities can be created by users; creators become community admins.
+- Support reactions and threaded comments. Provide moderation tools (delete comment, ban user from community).
+
+12) Monthly Challenge & Leaderboard
+- Implement monthly challenge objects. Users can opt-in their submissions to the challenge. For realistic-mode challenges, rank by `overall_score`. For creative challenges, rank by a configurable combination of `creativity` (LLM-internal) and community votes. Leaderboard must be exportable as CSV.
+
+13) API Endpoints (examples, strict request/response)
+- POST /api/auth/signup {name, email, password, age, experience_level} -> 201 { user }
+- POST /api/auth/login {email, password} -> 200 { access_token, refresh_token }
+- POST /api/submissions {title, description, mode, signed_upload_url} -> 201 { submission }
+- GET /api/submissions/:id -> 200 { submission, feedback[] }
+- POST /api/submissions/:id/feedback { reviewer_id, scores?, suggestions?, annotated_image_url? } -> 201 { feedback }
+- POST /api/communities {name, is_public} -> 201 { community }
+- POST /api/challenges/{month}/entries { submission_id } -> 201 { entry }
+
+14) Non-functional Requirements
+- Security: secure auth, input validation, image scanning for malware, RBAC enforcement for private threads.
+- Privacy: respect community/private settings; do not make private submissions public without explicit opt-in.
+- Scalability: store images in object storage (S3-compatible); process orientation and ML tasks asynchronously via job queue.
+- Observability: log major events (upload, feedback created, challenge entry) and provide metrics for monthly challenge usage.
+
+15) Acceptance Criteria & Tests
+- Unit tests for API endpoints: signup/login, create submission, fetch submission with feedback, opt-in to challenge, create community (public/private), and delete submission.
+- Integration tests for file upload flow including orientation detection prompt and user confirmation.
+- E2E test: student uploads submission -> automatic LLM feedback generated -> teacher annotates image -> submission appears on leaderboard when opted into challenge.
+
+16) Deliverables for Code Generator
+- Generate backend scaffold (models, controllers, routes) and DB migrations for models above.
+- Generate frontend scaffold with the 3-pane layout and components: SubmissionHistoryList, SubmissionViewer, FeedbackPanel, AnnotatorTool, CommunityThread, ChallengeLeaderboard.
+- Provide example LLM prompt templates for `realistic` and `creative` modes with variables to inject (`{experience_level}`, `{submission_metadata}`, `{reference_image_url}`, `{previous_feedback}`).
+- Provide CI test scaffold and example test cases described in Acceptance Criteria.
+
+17) Constraints & Notes (strict)
+- Do not invent additional grading metrics beyond those specified. Keep creative-mode behavior non-scoring by default. Always default to `realistic` mode when unspecified.
+- Upside-down detection must always ask the user before changing orientation.
+- Annotated labels must be integer indices referenced by comments.
+
+If the generator produces a runnable scaffold, ensure README includes setup, environment variables for image storage and LLM API keys, and sample curl commands for the core flows.
+
+18) Phased Development Plan (required)
+- Phase One — Baseline (MVP, must-complete before Phase Two):
+	- Deliverables: auth/signup/login (with `experience_level` field), database schema and migrations for `User`, `Submission`, `Feedback`, `Community` (minimal), `Challenge` (minimal), file upload signed-URL flow, orientation check with `is_upside_down` flag and user prompt, LLM integration templates for `realistic` and `creative` modes, core API endpoints listed above, basic 3-pane frontend with SubmissionHistoryList, SubmissionViewer, FeedbackPanel, and simple annotator display (read-only), server-side logging for uploads/feedback/actions, unit tests for API endpoints, integration test for upload + orientation prompt.
+	- Acceptance Criteria: user can sign up/login, upload image with signed URL, receive automatic LLM feedback for `realistic` mode (numeric breakdown + overall_score) and `creative` mode (text suggestions), orientation detection prompts user without auto-rotating, submissions saved and listed in left panel, feedback saved and retrievable via API.
+
+- Phase Two — Community & Challenges (build on Phase One):
+	- Deliverables: full Community/Thread model and API (create/join, public/private threads), reactions and threaded comments, moderation tools (delete comment, ban user), challenge opt-in flow, monthly leaderboard computation and CSV export, community UI widgets in right panel, ability to toggle chatbot contribution to final grade, background job processing for challenge ranking and vote tallying, E2E tests for community flows and leaderboard export.
+	- Acceptance Criteria: users can create/join communities, post and react in public/private threads with RBAC enforced, submissions can be opted into a monthly challenge and appear on the leaderboard per configured ranking rules, leaderboard export produces valid CSV, moderation actions respect permissions.
+
+- Phase Three — Advanced Annotation & Image Editing (optional advanced feature):
+	- Deliverables: interactive annotator tool that allows teachers (and optionally approved reviewers) to draw circles, label regions with integers, add textual comments linked to labels, and generate an annotated image overlay (new image file saved and linked on Feedback). Implement an AI-assisted marking feature that suggests incorrect objects/areas by analyzing submission vs reference image (for realistic mode) and proposes numbered callouts; teachers can accept/modify these suggestions before saving. Provide API endpoints to save annotated images and label/comment mappings. Add migration scripts, storage for annotated images, and tests for annotator accuracy and save/load flows.
+	- Acceptance Criteria: teacher can create and save annotated images with numbered labels; comments reference integer labels; AI-assisted suggestions appear but require teacher confirmation before being persisted; annotated images are retrievable via Feedback API and display correctly in the FeedbackPanel overlay.
+
+- Phase Sequencing Rules:
+	- Do not implement Phase Two features until Phase One acceptance criteria are met. Phase Three depends on Phase One and Phase Two for user roles and storage but may start in parallel as a feature branch if Phase One backend and storage are stable.
+	- Maintain backward compatibility: new schema fields should be nullable and migrations reversible.
+
+- Testing & CI per Phase:
+	- Phase One: unit + integration tests, run on push. Phase Two: add E2E tests for community and leaderboard flows. Phase Three: add UI integration tests for annotator and acceptance tests for annotated image persistence.
+
+- Notes on Creativity & Upside-down Handling:
+	- Across all phases, preserve user creative intent. Orientation detection must always prompt and allow an explicit user note explaining creative choices. Annotator tools must never silently change user artwork; all edits create new annotated image artifacts while preserving the original.
+
